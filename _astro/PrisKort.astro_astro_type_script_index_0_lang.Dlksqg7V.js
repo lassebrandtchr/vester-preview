@@ -1,0 +1,1 @@
+import{t as e}from"./priser.DNp0eIvL.js";e();

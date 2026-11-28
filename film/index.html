@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="da" data-composition-variables='[
+  {"id":"name","type":"string","label":"Navn","default":"vester.io"},
+  {"id":"head1","type":"string","label":"Overskrift 1","default":"Din nye forside."},
+  {"id":"head2","type":"string","label":"Overskrift 2","default":"Klar til gennemsyn."},
+  {"id":"line1","type":"string","label":"Linje 1","default":"Du tænker det."},
+  {"id":"line2","type":"string","label":"Linje 2","default":"Jeg bygger det."},
+  {"id":"ground","type":"color","label":"Bund","default":"#f3f7fd"},
+  {"id":"blue","type":"color","label":"Blå","default":"#1f5bff"},
+  {"id":"ink","type":"color","label":"Blæk","default":"#0a1633"},
+  {"id":"apricot","type":"color","label":"Abrikos (venter på dig)","default":"#ffb27a"},
+  {"id":"endHold","type":"number","label":"Slut-hold (s)","default":3.0,"min":0,"max":6,"step":0.1,"group":"Timing"}
+]'>
+<head>
+<meta charset="utf-8">
+<title>Vester · Du tænker det. Jeg bygger det.</title>
+<script src="vendor/gsap.min.js"></script>
+<script src="vendor/film-runtime.js"></script>
+<style id="mo-fonts">
+@font-face { font-family: "Onest"; src: url("../fonts/onest-latin-wght-normal.woff2") format("woff2"); font-weight: 100 900; font-style: normal; }
+@font-face { font-family: "Instrument Sans"; src: url("../fonts/instrument-sans-latin-wght-normal.woff2") format("woff2"); font-weight: 400 700; font-style: normal; }
+</style>
+<style>
+  html, body { margin: 0; width: 100%; height: 100%; overflow: hidden; }
+  h1, h2, p { margin: 0; }
+  /* Skærmen er altid mørk (Lasses valg 26/11), i både lys og mørk tilstand. Fladerne er variabler. */
+  #film { --ground: #050b1f; --ink: #eaf1ff; --blue: #5c8bff; --paper: #0b1530; --edge: #1b2a4d; --sketch: #15244a; --bar: #1a2a52; --soft: #98a6c6; --wait: #2a1a12; --wait-ink: #ffb27a; --approved: #0f1d40; --glow-a: #10245e; --glow-b: #3a2214; --lift: rgba(0, 0, 0, .55); }
+  #film { position: relative; width: 1920px; height: 1200px; overflow: hidden; background: var(--ground); color: var(--ink); font-family: "Onest", sans-serif; }
+  .light { position: absolute; inset: 0; background:
+      radial-gradient(1100px 800px at 96% 8%, var(--glow-a) 0%, transparent 70%),
+      radial-gradient(900px 700px at 100% 104%, var(--glow-b) 0%, transparent 68%); }
+
+  /* siden, der samler sig */
+  #page { position: absolute; left: 150px; top: 170px; width: 1010px; height: 860px; border-radius: 36px; background: var(--paper); border: 2px solid var(--edge);
+    box-shadow: 0 70px 130px -60px var(--lift), 0 8px 20px -8px rgba(11, 42, 143, .12); }
+  .sk { position: absolute; border-radius: 14px; background: var(--sketch); }
+  .nav { position: absolute; left: 48px; right: 48px; top: 40px; height: 56px; display: flex; align-items: center; gap: 16px; }
+  .nav svg { width: 54px; height: 54px; }
+  .nav b { font-weight: 700; font-size: 46px; letter-spacing: -1px; }
+  .nav i { margin-left: auto; width: 170px; height: 52px; border-radius: 99px; background: var(--blue); display: block; transform-origin: 100% 50%; }
+  .head { position: absolute; left: 48px; top: 150px; font-weight: 600; font-size: 88px; line-height: .96; letter-spacing: -4px; }
+  .head .m { display: block; overflow: hidden; padding-bottom: 20px; margin-bottom: -20px; }
+  .head .m span { display: block; }
+  .head .soft { color: var(--soft); }
+  .img { position: absolute; left: 48px; top: 400px; width: 500px; height: 270px; border-radius: 26px;
+    background: radial-gradient(70% 90% at 100% 100%, #ffc79d 0%, transparent 60%), linear-gradient(120deg, #3d7dff, #1438d6 70%, #071a5e); }
+  .txt { position: absolute; left: 584px; top: 408px; width: 378px; display: grid; gap: 18px; }
+  .txt i { display: block; height: 26px; border-radius: 10px; background: var(--bar); transform-origin: 0 50%; }
+  .txt i:nth-child(2) { width: 72%; } .txt i:nth-child(3) { width: 88%; } .txt i:nth-child(4) { width: 58%; }
+  .approve { position: absolute; left: 48px; right: 48px; top: 712px; height: 112px; border-radius: 28px; background: var(--wait); display: flex; align-items: center; justify-content: space-between; padding: 0 20px 0 32px; }
+  .badge { display: flex; align-items: center; gap: 16px; font: 600 44px "Instrument Sans", sans-serif; color: var(--wait-ink); }
+  .badge u { width: 16px; height: 16px; border-radius: 50%; background: #ff9a52; display: block; }
+  .btn { position: relative; width: 310px; height: 76px; border-radius: 99px; background: var(--apricot); color: #3a1c06; font: 600 44px "Instrument Sans", sans-serif; }
+  .btn span { position: absolute; inset: 0; display: grid; place-items: center; }
+  .btn.done { position: absolute; right: 20px; top: 18px; background: var(--ink); color: var(--ground); }
+
+  #cursor { position: absolute; left: 0; top: 0; width: 56px; height: 56px; filter: drop-shadow(0 6px 8px rgba(10, 22, 51, .35)); }
+
+  /* fluebenet */
+  #check { position: absolute; left: 1060px; top: 225px; width: 800px; height: 731px; --lit: 0; --halo: 0; }
+  #check img { position: absolute; inset: 0; width: 100%; height: 100%; }
+  #check .body { filter: saturate(calc(.15 + .85 * var(--lit))) brightness(calc(.62 + .38 * var(--lit))); }
+  #check .glow { opacity: var(--halo); }
+  #check svg { position: absolute; inset: 0; width: 100%; height: 100%; mix-blend-mode: soft-light; filter: blur(5px);
+    -webkit-mask: url("assets/flueben.webp") center / contain no-repeat; mask: url("assets/flueben.webp") center / contain no-repeat; }
+  #check path { fill: none; stroke: #fff; stroke-width: 170; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: .3 2; stroke-dashoffset: .3; }
+
+  .claim { position: absolute; right: 110px; top: 905px; text-align: right; font-weight: 600; font-size: 76px; line-height: 1; letter-spacing: -3.4px; }
+  .claim .m { display: block; overflow: hidden; padding-bottom: 18px; margin-bottom: -14px; }
+  .claim .m span { display: block; }
+  .claim .b { color: var(--blue); }
+</style>
+</head>
+<body>
+<!-- 16:10 som MacBook Pro-skærmen. Øverste ca. 50px er notch-zone: intet indhold der. -->
+<div id="film" data-composition-id="film" data-width="1920" data-height="1200">
+  <div class="light"></div>
+
+  <div id="page" data-mo-id="page">
+    <div class="sk s-nav" style="left:48px; top:46px; width:230px; height:44px"></div>
+    <div class="sk s-h1" style="left:48px; top:160px; width:640px; height:70px"></div>
+    <div class="sk s-h2" style="left:48px; top:250px; width:560px; height:70px"></div>
+    <div class="sk s-img" style="left:48px; top:400px; width:500px; height:270px; border-radius:26px"></div>
+    <div class="sk s-ap" style="left:48px; top:712px; width:914px; height:112px; border-radius:28px"></div>
+
+    <div class="nav" data-mo-id="nav">
+      <svg viewBox="0 0 64 64" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M14.4 34.6l14.1 11.5 24.4-25.3" stroke="#0b2a8f" stroke-width="13.5"/><path d="M12.2 32.6l14.1 11.5 24.4-25.3" stroke="#c9f0ff" stroke-width="13.5"/><path d="M12.2 32.6l14.1 11.5 24.4-25.3" stroke="#1f5bff" stroke-width="11"/></svg>
+      <b data-var-text="name">Vester</b>
+      <i></i>
+    </div>
+    <h1 class="head" data-mo-id="head">
+      <span class="m"><span class="h1" data-var-text="head1">Din nye forside.</span></span>
+      <span class="m soft"><span class="h2" data-var-text="head2">Klar til gennemsyn.</span></span>
+    </h1>
+    <div class="img" data-mo-id="img"></div>
+    <div class="txt"><i></i><i></i><i></i><i></i></div>
+    <div class="approve" data-mo-id="approve">
+      <div class="badge"><u></u><span>Venter på dig</span></div>
+      <div class="btn todo"><span>Godkend</span></div>
+      <div class="btn done"><span>Godkendt</span></div>
+    </div>
+  </div>
+
+  <div id="check" data-mo-id="check">
+    <img class="glow" src="assets/flueben-glow.webp" alt="">
+    <img class="body" src="assets/flueben.webp" alt="">
+    <svg viewBox="0 0 1312 1199"><path d="M262 548 L548 792 L1046 262" pathLength="1"/></svg>
+  </div>
+
+  <p class="claim" data-mo-id="claim">
+    <span class="m"><span class="c1" data-var-text="line1">Du tænker det.</span></span>
+    <span class="m b"><span class="c2" data-var-text="line2">Jeg bygger det.</span></span>
+  </p>
+
+  <svg id="cursor" viewBox="0 0 28 28" data-mo-id="cursor"><path d="M5 3l17 9.5-7.4 1.9L11 22z" fill="#0a1633" stroke="#fff" stroke-width="1.6" stroke-linejoin="round"/></svg>
+</div>
+
+<script>
+  const V = MO.vars();
+  const approved = getComputedStyle(document.getElementById('film')).getPropertyValue('--approved').trim() || '#0f1d40';
+  const tl = gsap.timeline({ paused: true, defaults: { ease: 'expo.out' } });
+  const out = { autoAlpha: 0 };
+
+  // Billede 0: siden står som skitse. Det rigtige indhold er skjult, før tidslinjen går i gang.
+  const start = () => {
+    gsap.set(['.nav', '.img', '.approve', '.btn.done', '#check', '#cursor'], out);
+    gsap.set(['.h1', '.h2', '.c1', '.c2'], { yPercent: 135 });
+    gsap.set('.txt i', { scaleX: 0 });
+    gsap.set('#cursor', { x: 1760, y: 1250 });
+    gsap.set('#check', { '--lit': 0, '--halo': 0 });
+    gsap.set('#page', { x: 305 });
+  };
+  start();
+
+  // 1 · siden samler sig
+  tl.addLabel('scene:byg', 0)
+    .to('.s-nav', { autoAlpha: 0, duration: .3 }, .3)
+    .fromTo('.nav', { autoAlpha: 0, y: 14 }, { autoAlpha: 1, y: 0, duration: .5 }, .3)
+    .from('.nav i', { scaleX: 0, duration: .5 }, .45)
+    .to(['.s-h1', '.s-h2'], { autoAlpha: 0, duration: .3, stagger: .3 }, .75)
+    .to('.h1', { yPercent: 0, duration: .7 }, .75)
+    .to('.h2', { yPercent: 0, duration: .7 }, 1.05)
+    .to('.s-img', { autoAlpha: 0, duration: .3 }, 1.7)
+    .fromTo('.img', { autoAlpha: 1, clipPath: 'inset(0 100% 0 0 round 26px)' }, { clipPath: 'inset(0 0% 0 0 round 26px)', duration: .8, immediateRender: false }, 1.6)
+    .to('.txt i', { scaleX: 1, duration: .5, stagger: .11 }, 2.0)
+    .to('.s-ap', { autoAlpha: 0, duration: .3 }, 2.8)
+    .fromTo('.approve', { autoAlpha: 0, scale: .96 }, { autoAlpha: 1, scale: 1, duration: .5, immediateRender: false }, 2.75);
+
+  // 2 · du godkender
+  tl.addLabel('scene:godkend', 3.3)
+    .set('#cursor', { autoAlpha: 1 }, 3.3)
+    .to('#cursor', { x: 1320, y: 944, duration: 1.3, ease: 'power3.inOut' }, 3.3)
+    .to(['#cursor', '.btn.todo'], { scale: .9, duration: .1, ease: 'power2.in', transformOrigin: '50% 50%' }, 4.65)
+    .set('.btn.done', { autoAlpha: 1 }, 4.76)
+    .set(['.btn.todo', '.badge'], { autoAlpha: 0 }, 4.76)
+    .fromTo('.btn.done', { scale: .9 }, { scale: 1, duration: .4, ease: 'back.out(2.4)', immediateRender: false }, 4.76)
+    .to('#cursor', { scale: 1, duration: .25 }, 4.76)
+    .to('.approve', { backgroundColor: approved, duration: .4 }, 4.76)
+    .to('#cursor', { x: 1500, y: 1270, autoAlpha: 0, duration: .7, ease: 'power2.in' }, 4.95);
+
+  // 3 · fluebenet lander og tænder (pointen)
+  tl.addLabel('scene:flueben', 4.8)
+    .fromTo('#check', { autoAlpha: 0, scale: 1.3, y: -70, rotation: -7 }, { autoAlpha: 1, scale: 1, y: 0, rotation: 0, duration: .8, ease: 'back.out(1.5)', immediateRender: false }, 4.8)
+    .to('#check', { '--lit': 1, duration: .8, ease: 'power2.out' }, 5.0)
+    .to('#check path', { strokeDashoffset: -1.3, duration: 1.3, ease: 'power2.inOut' }, 5.1)
+    .to('#check', { '--halo': 1.2, duration: .5, ease: 'power2.out' }, 5.5)
+    .to('#check', { '--halo': 1, duration: .8, ease: 'power2.inOut' }, 6.0)
+    .to('#page', { x: -30, duration: 1.1, ease: 'expo.inOut' }, 4.55)
+    .to('.c1', { yPercent: 0, duration: .7 }, 6.0)
+    .to('.c2', { yPercent: 0, duration: .7 }, 6.4)
+    .to('#check', { y: -10, duration: 1.6, ease: 'sine.inOut', yoyo: true, repeat: 1 }, 7.0);
+
+  // slut: holdes
+  tl.addLabel('scene:slut', 7.2)
+    .fromTo('#check path', { strokeDashoffset: .3 }, { strokeDashoffset: -1.3, duration: 1.2, ease: 'power2.inOut', immediateRender: false }, 8.3)
+    .to({}, { duration: V.endHold }, 7.3);
+  MO.sfx('thud', 4.8, { gain: .5 });
+  MO.sfx('click', 4.7, { gain: .5 });
+
+  window.__timelines = window.__timelines || {};
+  window.__timelines['film'] = tl;
+</script>
+</body>
+</html>
